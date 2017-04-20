@@ -22,8 +22,7 @@ public class Percolation {
 		this.n = n; 
 		
 		/**
-		 * Initializing siteGrid by setting
-		 * all sites as closed
+		 * Initializing all sites to be blocked
 		 */
 	    for (int i = 0; i < siteGrid.length; i++) {
             for (int j = 0; j < siteGrid[i].length; j++) {
