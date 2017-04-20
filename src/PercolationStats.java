@@ -22,9 +22,7 @@ import edu.princeton.cs.algs4.*;
 public class PercolationStats {
 	
 	private int gridSize; 		// size of grid
-	private int openSites; 		// value of amount of open sites
-	private Percolation grid; 	// data structure for testing percolation
-	private int trials;			// amount of independent trials to perform 
+	private int trials;
 	private  double[] pValues;	// p-threshold values gathered throughout trials
 	
 	/**
@@ -39,27 +37,22 @@ public class PercolationStats {
 			throw new IllegalArgumentException();
 		
 		gridSize = n * n;
-		pValues = new double[n];
+		pValues = new double[trials];
 		this.trials = trials;
 			
 		for(int i = 0; i < trials; i++){
 			
-			grid = new Percolation(n);
-			openSites = 0; 
+			Percolation grid = new Percolation(n);
 			
 			while(!grid.percolates()){
-				int randRow = StdRandom.uniform(1, n);
-				int randCol = StdRandom.uniform(1, n);
-				
-				while(grid.isOpen(randRow, randCol)){
-					randRow = StdRandom.uniform(1, n);
-					randCol = StdRandom.uniform(1, n);
-				} 
+				int randRow = StdRandom.uniform(1, n + 1);
+				int randCol = StdRandom.uniform(1, n + 1);
 				
 				grid.open(randRow, randCol);
+				
 			}
 			
-			openSites = grid.numberOfOpenSites();
+			int openSites = grid.numberOfOpenSites();
 			pValues[i] = (double) openSites/gridSize;
 		}
 	}
@@ -104,7 +97,7 @@ public class PercolationStats {
 	 */
 	
 	public double confidenceHi(){
-		double calcHi = this.mean() + (1.96 * this.stddev())/Math.sqrt(this.trials);
+		double calcHi = this.mean() + (1.96 * this.stddev())/Math.sqrt(trials);
 		return calcHi;
 	}
 	
@@ -119,6 +112,7 @@ public class PercolationStats {
 		int trials = Integer.parseInt(args[1]);
 		
 		PercolationStats stats = new PercolationStats(size, trials);
+		
 		System.out.println("mean = " + stats.mean());
 		System.out.println("stddev = " + stats.stddev());
 		System.out.println("95% confidence interval = [" + stats.confidenceLo()

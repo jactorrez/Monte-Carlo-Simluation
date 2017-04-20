@@ -11,25 +11,30 @@
  * 
  *----------------------------------------------------------------*/
 
-import edu.princeton.cs.algs4.WeightedQuickUnionUF;
+
+
+import edu.princeton.cs.algs4.*;
 
 public class Percolation {
 	
 	private int[][] siteGrid;  				// 2D array to simulate an N-by-N grid of sites
-	private WeightedQuickUnionUF nodeGrid;  // quick-union data structure of N-by-N map of nodes			 
+	private WeightedQuickUnionUF nodeGrid;  // quick-union data structure of N-by-N map of nodes		
+	private WeightedQuickUnionUF backwashGrid; // grid used to avoid backwash
 	private int n;							// factor used to determine size of grid
 	private int openSites;					// counter to keep track of number of open sites
 	private int topNode = 0;				// location of top node used to check percolation
-	private int bottomNode = (n * n) + 1;	// location of bottom used to check percolation
+	private int bottomNode;	// location of bottom used to check percolation
 	
 	/**
 	 * Class constructor that takes one parameter, n
 	 * @param n the factor used to determine the grid size (n x n)
 	 */
-	public Percolation(int n){ 
+	public Percolation(int n) { 
 		validateInput(n);
 		siteGrid = new int[n][n];
+		bottomNode = (n * n) + 1;
 		nodeGrid = new WeightedQuickUnionUF(n * n + 2);
+		backwashGrid = new WeightedQuickUnionUF(n * n + 1);
 		this.n = n; 
 		
 		 // initializing all sites on the grid to be blocked 
@@ -64,7 +69,7 @@ public class Percolation {
 	 * @exception IndexOutOfBoundsException If point location is outside
 	 * 										of the bounds of the grid
 	 */
-	public void validateSite(int row, int col){
+	private void validateSite(int row, int col){
 		if (row > n || row < 1 || col > n || col < 1){
 			throw new IndexOutOfBoundsException();
 		}
@@ -110,22 +115,26 @@ public class Percolation {
 		
 		if(hasOpenTop){
 			nodeGrid.union(node, node - n);
-			
-		} else if(!hasOpenTop && isInTopRow){
+			backwashGrid.union(node, node - n);
+		} else if(isInTopRow){
 			nodeGrid.union(node, topNode);
+			backwashGrid.union(node, topNode);
 		}
 		
 		if(hasOpenLeft){
 			nodeGrid.union(node, node - 1);
+			backwashGrid.union(node, node - 1);
 		}
 		
 		if(hasOpenRight){
 			nodeGrid.union(node, node + 1);
+			backwashGrid.union(node, node + 1);
 		}
 		
 		if(hasOpenBottom){
 			nodeGrid.union(node,node + n);
-		} else if(!hasOpenBottom && isInBottomRow){
+			backwashGrid.union(node, node + n);
+		} else if(isInBottomRow){
 			nodeGrid.union(node, bottomNode);
 		}
 	}
@@ -168,7 +177,7 @@ public class Percolation {
 	public boolean isFull(int row, int col){
 		validateSite(row, col);
 		int node = siteToPoint(row, col);
-		boolean nodeIsFull = nodeGrid.connected(node, 0);
+		boolean nodeIsFull = backwashGrid.connected(node, topNode);
 		
 		return nodeIsFull;
 	}
