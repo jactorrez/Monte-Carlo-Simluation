@@ -1,29 +1,38 @@
-/**
- * Javier Torrez
- * 4/19/17
- * Simulating a system to measure percolation potential
- */
+/*----------------------------------------------------------------
+ *  Author:        Javier Torrez
+ *  Written:       4/12/2017
+ *  Last updated:  4/19/2017
+ *
+ *  Compilation:   javac-algs4 Percolation.java
+ *  Execution:     java-algs4 Percolation
+ *  
+ *  Simulates system of sites capable of creating and testing
+ *  the conditions for it to percolate 
+ * 
+ *----------------------------------------------------------------*/
 
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
 	
-	private int[][] siteGrid;  				// 2D array of N-by-N sites
-	private WeightedQuickUnionUF nodeGrid;  // WQUF data structure of N-by-N nodes			// 
-	private int n;							// Factor used to determine size of grid
-	private int openSites;					// Counter for number of open sites
-	private int topNode = 0;				// Top node to  decrease amount of necessary checks
-	private int bottomNode = (n * n) + 1;	// Bottom node to decrease amount of necessary checks
-
+	private int[][] siteGrid;  				// 2D array to simulate an N-by-N grid of sites
+	private WeightedQuickUnionUF nodeGrid;  // quick-union data structure of N-by-N map of nodes			 
+	private int n;							// factor used to determine size of grid
+	private int openSites;					// counter to keep track of number of open sites
+	private int topNode = 0;				// location of top node used to check percolation
+	private int bottomNode = (n * n) + 1;	// location of bottom used to check percolation
+	
+	/**
+	 * Class constructor that takes one parameter, n
+	 * @param n the factor used to determine the grid size (n x n)
+	 */
 	public Percolation(int n){ 
 		validateInput(n);
 		siteGrid = new int[n][n];
 		nodeGrid = new WeightedQuickUnionUF(n * n + 2);
 		this.n = n; 
 		
-		/**
-		 * Initializing all sites to be blocked
-		 */
+		 // initializing all sites on the grid to be blocked 
 	    for (int i = 0; i < siteGrid.length; i++) {
             for (int j = 0; j < siteGrid[i].length; j++) {
                 siteGrid[i][j] = 0;
@@ -32,9 +41,12 @@ public class Percolation {
 	}
 	
 	/**
-	 * Validates a given input passed by checking
-	 * if it's less than zero
+	 * Validates a single input value by checking
+	 * if it's less than or equal to zero 
+	 * 
 	 * @param input value to validate
+	 * @exception IllegalArgumentException If input is less than 
+	 * 									   or equal to 0
 	 */
 	private void validateInput(int input){
 		if(input <= 0){
@@ -43,38 +55,41 @@ public class Percolation {
 	}
 	
 	/**
-	 * Validates a given site coordinate by checking
-	 * if it exists
-	 * @param row
-	 * @param col
-	 * @return
+	 * Validates two inputs. Used for validation
+	 * of locations on the grid by checking if they
+	 * exist or are out of bounds
+	 * 
+	 * @param row Y-axis location of given site
+	 * @param col X-axis location of given site
+	 * @exception IndexOutOfBoundsException If point location is outside
+	 * 										of the bounds of the grid
 	 */
-	public int validateSite(int row, int col){
+	public void validateSite(int row, int col){
 		if (row > n || row < 1 || col > n || col < 1){
 			throw new IndexOutOfBoundsException();
 		}
-		return siteGrid[row-1][col-1];
 	}
 	
 	/**
-	 * Maps a given site coordinate (row, col) to a location
-	 * on the grid of nodes 
-	 * @param row
-	 * @param col
-	 * @return node corresponding to the location on the site
-	 * coordinate grid
+	 * Determines the value of the node on the 1-dimensional QF grid based
+	 * on coordinates given from the 2-dimensional grid of sites
+	 * 
+	 * @param row Y-axis location of given site
+	 * @param col X-axis location of given site
+	 * @return    the node mapped to the 1D grid based on the 
+	 * 			  initial coordinate point
 	 */
 	private int siteToPoint(int row, int col){
 		int node = ((row * n) - n) + col;
 		return node;
 	}
 	
-	
 	/**
-	 * Connects given node in current coordinate to surrounding 
-	 * open sites if possible 
-	 * @param row
-	 * @param col
+	 * Connects given site in corresponding to surrounding 
+	 * open sites if possible
+	 * 
+	 * @param row Y-axis location of given site
+	 * @param col X-axis location of given site
 	 */
 	private void connectToSurrounding(int row, int col){
 		int node = siteToPoint(row, col);
@@ -82,14 +97,17 @@ public class Percolation {
 		boolean isInTopRow = row == 1;
 		boolean isInBottomRow = row == n;
 		
-		// Checks if open nodes surrounding the current node exist
+		// checks if surrounding sites for the given point are open
+		// to determine where connections via union can be made
 		boolean hasOpenTop = row > 1 ? (isOpen(row - 1, col) ? true : false) : false;
 		boolean hasOpenLeft = col > 1 ? (isOpen(row, col - 1) ? true : false) : false;
 		boolean hasOpenRight = col < n ? (isOpen(row, col + 1) ? true : false) : false;
 		boolean hasOpenBottom = row < n ? (isOpen(row + 1, col) ? true : false) : false;
 		
-		// Given results from variables above, connects node via union 
-		// method to surrounding open sites
+		// given determined values from variables above, connects site
+		// to surrounding open sites via union. If site is in the top or
+		// bottom row, connects site to top-most or bottom-most node 
+		
 		if(hasOpenTop){
 			nodeGrid.union(node, node - n);
 			
@@ -114,8 +132,9 @@ public class Percolation {
 	
 	/**	
 	 * Opens a given site
-	 * @param row row of node to open
-	 * @param col column node to open
+	 * 
+	 * @param row Y-axis location of given site
+	 * @param col X-axis location of given site
 	 */
 	public void open(int row, int col){
 		validateSite(row, col);
@@ -129,8 +148,9 @@ public class Percolation {
 	
 	/**
 	 * Checks if a given site is open
-	 * @param row row of node to check
-	 * @param col column of node to check
+	 * 
+	 * @param row Y-axis location of given site
+	 * @param col X-axis location of given site
 	 * @return
 	 */
 	public boolean isOpen(int row, int col){
@@ -139,10 +159,10 @@ public class Percolation {
 	}
 	
 	/**
-	 * Checks is a given site on the grid is full
+	 * Checks if a given site on the grid is full
 	 * 
-	 * @param row
-	 * @param col
+	 * @param row vertical location of given site location
+	 * @param col horizontal location of given site location
 	 * @return
 	 */
 	public boolean isFull(int row, int col){
@@ -155,6 +175,7 @@ public class Percolation {
 	
 	/**
 	 * Checks how many open sites exist on the current grid
+	 * 
 	 * @return amount of open sites
 	 */
 	public int numberOfOpenSites(){
@@ -162,20 +183,12 @@ public class Percolation {
 	}
 	
 	/**
-	 * Checks if the grid percolations
-	 * @return
+	 * Checks if the grid percolates
+	 * 
+	 * @return true or false, determined by seeing if top-most and
+	 * 		   bottom-most sites on grid are connected 
 	 */
-	
 	public boolean percolates(){
 		return nodeGrid.connected(bottomNode, topNode);
-	}
-	
-	public static void main(String[] args){
-		
-		Percolation test = new Percolation(3);
-		test.open(1, 3);
-		test.open(2, 3);
-
-        System.out.println(test.isFull(3, 1));
 	}
 }
